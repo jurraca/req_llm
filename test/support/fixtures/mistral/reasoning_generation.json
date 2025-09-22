@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-mistral-reasoning",
+  "object": "chat.completion",
+  "created": 1700000000,
+  "model": "magistral-medium-latest",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Let me think step by step:\n\n2 + 2 = 4\n\nThis is a basic arithmetic addition where we combine two units with two more units to get four units total."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 35,
+    "total_tokens": 50
+  }
+}

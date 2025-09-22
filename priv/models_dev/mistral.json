@@ -580,7 +580,7 @@
   "provider": {
     "base_url": "https://api.mistral.ai/v1",
     "doc": "AI model provider",
-    "env": [],
+    "env": ["MISTRAL_API_KEY"],
     "id": "mistral",
     "name": "Mistral"
   }

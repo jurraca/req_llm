@@ -1,0 +1,51 @@
+[
+  {
+    "id": "chatcmpl-mistral-long-stream",
+    "object": "chat.completion.chunk",
+    "created": 1700000000,
+    "model": "mistral-large-latest",
+    "choices": [
+      {
+        "index": 0,
+        "delta": {
+          "role": "assistant",
+          "content": ""
+        },
+        "finish_reason": null
+      }
+    ]
+  },
+  {
+    "id": "chatcmpl-mistral-long-stream",
+    "object": "chat.completion.chunk",
+    "created": 1700000000,
+    "model": "mistral-large-latest",
+    "choices": [
+      {
+        "index": 0,
+        "delta": {
+          "content": "Machine learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed for every task. It works by identifying patterns in large datasets and using those patterns to make predictions or decisions about new, unseen data."
+        },
+        "finish_reason": null
+      }
+    ]
+  },
+  {
+    "id": "chatcmpl-mistral-long-stream",
+    "object": "chat.completion.chunk",
+    "created": 1700000000,
+    "model": "mistral-large-latest",
+    "choices": [
+      {
+        "index": 0,
+        "delta": {},
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 25,
+      "completion_tokens": 45,
+      "total_tokens": 70
+    }
+  }
+]

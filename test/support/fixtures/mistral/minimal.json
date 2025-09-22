@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-mistral-minimal",
+  "object": "chat.completion",
+  "created": 1700000000,
+  "model": "mistral-large-latest",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Once"
+      },
+      "finish_reason": "length"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 25,
+    "completion_tokens": 5,
+    "total_tokens": 30
+  }
+}

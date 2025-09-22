@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-mistral-code",
+  "object": "chat.completion",
+  "created": 1700000000,
+  "model": "codestral-latest",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here's a Python function to add two numbers:\n\n```python\ndef add_numbers(a, b):\n    \"\"\"\n    Add two numbers and return the result.\n    \n    Args:\n        a: First number\n        b: Second number\n    \n    Returns:\n        The sum of a and b\n    \"\"\"\n    return a + b\n```"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 60,
+    "total_tokens": 72
+  }
+}

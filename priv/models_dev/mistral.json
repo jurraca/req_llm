@@ -578,7 +578,7 @@
     }
   ],
   "provider": {
-    "base_url": null,
+    "base_url": "https://api.mistral.ai/v1",
     "doc": "AI model provider",
     "env": [],
     "id": "mistral",

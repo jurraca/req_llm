@@ -1,11 +1,11 @@
 defmodule ReqLLM.Providers.Mistral do
   @moduledoc """
-  Mistral provider – 100% OpenAI Chat Completions compatible with Mistral's language models.
+  Mistral provider with optimized structured output support for Mistral's language models.
 
   ## Protocol Usage
 
   Uses the generic `ReqLLM.Context.Codec` and `ReqLLM.Response.Codec` protocols.
-  No custom wrapper modules – leverages the standard OpenAI-compatible codecs.
+  Implements Mistral's native structured output approach for `generate_object/4` operations.
 
   ## Mistral Models
 
@@ -42,6 +42,10 @@ defmodule ReqLLM.Providers.Mistral do
       # Code generation
       model = ReqLLM.Model.from("mistral:codestral-latest")
       {:ok, response} = ReqLLM.generate_text(model, "Write a Python function to sort a list")
+
+      # Structured object generation (uses Mistral's native approach)
+      schema = [name: [type: :string, required: true], age: [type: :pos_integer, required: true]]
+      {:ok, response} = ReqLLM.generate_object(model, "Generate a person", schema)
   """
 
   @behaviour ReqLLM.Provider
@@ -54,6 +58,84 @@ defmodule ReqLLM.Providers.Mistral do
 
   use ReqLLM.Provider.Defaults
 
-  # No custom implementations needed - Mistral is fully OpenAI-compatible
-  # All standard operations (chat, embedding, streaming, tool calling) work with defaults
+  @impl ReqLLM.Provider
+  def prepare_request(:object, model_spec, prompt, opts) do
+    # Use Mistral's native structured output approach instead of tool calling
+    compiled_schema = Keyword.fetch!(opts, :compiled_schema)
+    
+    # Use ReqLLM.Tool.new! to properly convert schema (like xAI provider)
+    structured_output_tool =
+      ReqLLM.Tool.new!(
+        name: "structured_output",
+        description: "Generate structured output matching the provided schema", 
+        parameter_schema: compiled_schema.schema,
+        callback: fn _args -> {:ok, "structured output generated"} end
+      )
+    
+    # Extract the JSON schema from the properly converted tool
+    json_schema = Jason.encode!(structured_output_tool.parameter_schema, pretty: true)
+    
+    # Mistral's recommended system prompt with schema
+    schema_instruction = """
+    Your output should be an instance of a JSON object following this schema: #{json_schema}
+    
+    Please ensure your response is valid JSON that strictly adheres to the provided schema.
+    """
+    
+    # Add schema instruction to system prompt or create one if none exists
+    enhanced_opts = 
+      case opts[:system_prompt] do
+        nil -> 
+          Keyword.put(opts, :system_prompt, schema_instruction)
+        existing_system -> 
+          Keyword.put(opts, :system_prompt, existing_system <> "\n\n" <> schema_instruction)
+      end
+      |> Keyword.put(:response_format, %{type: "json_object"})
+      |> Keyword.put_new(:max_tokens, 4096)
+      |> Keyword.put(:operation, :object)
+    
+    # Use regular chat preparation with enhanced prompts
+    ReqLLM.Provider.Defaults.prepare_request(__MODULE__, :chat, model_spec, prompt, enhanced_opts)
+  end
+
+  # Delegate all other operations to defaults
+  def prepare_request(operation, model_spec, prompt, opts) do
+    ReqLLM.Provider.Defaults.prepare_request(__MODULE__, operation, model_spec, prompt, opts)
+  end
+
+  # Custom decode for object responses when using Mistral's JSON format
+  @impl ReqLLM.Provider  
+  def decode_response({request, response}) do
+    case request.options[:operation] do
+      :object ->
+        decode_object_response({request, response})
+      _ ->
+        ReqLLM.Provider.Defaults.default_decode_response({request, response})
+    end
+  end
+
+  # Parse JSON response directly instead of extracting from tool calls
+  defp decode_object_response({request, %Req.Response{status: status} = response}) when status in 200..299 do
+    with {_req, %Req.Response{body: decoded_response}} <- 
+           ReqLLM.Provider.Defaults.default_decode_response({request, response}),
+         content when is_list(content) <- decoded_response.message.content,
+         text_content <- Enum.find(content, &(&1.type == :text)),
+         {:ok, parsed_object} <- Jason.decode(text_content.text) do
+      
+      # Add the parsed object to the response
+      enhanced_response = %{decoded_response | object: parsed_object}
+      {request, %{response | body: enhanced_response}}
+    else
+      {:error, %Jason.DecodeError{}} ->
+        # Fall back to default tool calling if JSON parsing fails
+        ReqLLM.Provider.Defaults.default_decode_response({request, response})
+      error ->
+        error
+    end
+  end
+
+  defp decode_object_response({request, response}) do
+    # Handle error responses with default behavior
+    ReqLLM.Provider.Defaults.default_decode_response({request, response})
+  end
 end

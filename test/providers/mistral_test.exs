@@ -226,7 +226,7 @@ defmodule ReqLLM.Providers.MistralTest do
       }
 
       {:error, error} = Mistral.decode_response(mock_response)
-      assert %ReqLLM.Error.HTTP{} = error
+      assert %ReqLLM.Error.API.Response{} = error
       assert error.status == 401
     end
   end

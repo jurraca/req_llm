@@ -10,7 +10,6 @@ defmodule ReqLLM.Providers.MistralTest do
 
   import ReqLLM.ProviderTestHelpers
 
-  alias ReqLLM.Context
   alias ReqLLM.Providers.Mistral
 
   describe "provider contract" do
@@ -151,7 +150,8 @@ defmodule ReqLLM.Providers.MistralTest do
       tool = ReqLLM.tool(
         name: "get_weather",
         description: "Get weather info",
-        parameter_schema: [location: [type: :string, required: true]]
+        parameter_schema: [location: [type: :string, required: true]],
+        callback: fn _args -> {:ok, "weather data"} end
       )
 
       mock_request = %Req.Request{
@@ -203,10 +203,11 @@ defmodule ReqLLM.Providers.MistralTest do
         headers: [{"content-type", "application/json"}]
       }
 
-      {:ok, decoded_response} = Mistral.decode_response(mock_response)
+      mock_request = %Req.Request{}
+      {_req, %Req.Response{body: decoded_response}} = Mistral.decode_response({mock_request, mock_response})
 
       assert %ReqLLM.Response{} = decoded_response
-      assert decoded_response.message.content == "Hello! How can I help you today?"
+      assert decoded_response.message.content |> List.first() |> Map.get(:text) == "Hello! How can I help you today?"
       assert decoded_response.usage.input_tokens == 10
       assert decoded_response.usage.output_tokens == 9
     end
@@ -225,7 +226,8 @@ defmodule ReqLLM.Providers.MistralTest do
         headers: [{"content-type", "application/json"}]
       }
 
-      {:error, error} = Mistral.decode_response(mock_response)
+      mock_request = %Req.Request{}
+      {_req, error} = Mistral.decode_response({mock_request, mock_response})
       assert %ReqLLM.Error.API.Response{} = error
       assert error.status == 401
     end
